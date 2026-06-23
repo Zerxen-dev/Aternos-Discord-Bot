@@ -32,11 +32,12 @@ for var, desc in required.items():
 
 if missing:
     print(
-        "\n  WARNING: Some environment variables are missing.\n"
-        "  The bot will fall back to the hardcoded values inside aternos_server_bot.py.\n"
-        "  Set them in your Pterodactyl panel (Variables tab) for better security.\n",
+        "\n  ERROR: Required environment variables are missing (see above).\n"
+        "  Set them in your .env file (local) or the Variables tab of your\n"
+        "  hosting panel (Pterodactyl, etc.), then restart the bot.\n",
         flush=True,
     )
+    sys.exit(1)
 
 # ── 3. Install / upgrade dependencies ─────────────────────
 print("\n[3/4] Installing dependencies from requirements.txt ...", flush=True)

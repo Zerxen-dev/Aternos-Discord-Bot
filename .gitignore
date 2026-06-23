@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+autostart_state.json
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
