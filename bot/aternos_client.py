@@ -6,10 +6,11 @@ import asyncio
 import logging
 import threading
 import time
-from typing import Optional
+from typing import Optional, Any
 
-from python_aternos import Client
+from python_aternos import Client, Lists
 from python_aternos.atserver import AternosServer
+
 
 log = logging.getLogger('AternosBot.aternos')
 
@@ -107,6 +108,8 @@ class AternosManager:
 
     # ── public API ───────────────────────────────────────────────────────────
 
+    # ── public API ───────────────────────────────────────────────────────────
+
     def login_blocking(self, retries: int = 6, base_delay: float = 5.0) -> None:
         """Synchronous login for use at startup, before the event loop exists."""
         self._login_blocking(retries, base_delay)
@@ -125,3 +128,51 @@ class AternosManager:
 
     async def restart(self) -> bool:
         return await asyncio.to_thread(self._call_blocking, 'restart')
+
+    # ── new: player lists, console commands, and server config properties ──
+
+    def _list_players_blocking(self, list_type: Lists) -> list[str]:
+        with self._lock:
+            return self.server.players(list_type).list_players(cache=False)
+
+    def _add_player_blocking(self, list_type: Lists, name: str) -> None:
+        with self._lock:
+            self.server.players(list_type).add(name)
+
+    def _remove_player_blocking(self, list_type: Lists, name: str) -> None:
+        with self._lock:
+            self.server.players(list_type).remove(name)
+
+    def _get_properties_blocking(self) -> dict[str, Any]:
+        with self._lock:
+            return self.server.config.get_server_props(proptyping=True)
+
+    def _set_property_blocking(self, option: str, value: Any) -> None:
+        with self._lock:
+            self.server.config.set_server_prop(option, value)
+
+    async def list_players(self, list_type: Lists) -> list[str]:
+        return await asyncio.to_thread(self._list_players_blocking, list_type)
+
+    async def add_player(self, list_type: Lists, name: str) -> None:
+        await asyncio.to_thread(self._add_player_blocking, list_type, name)
+
+    async def remove_player(self, list_type: Lists, name: str) -> None:
+        await asyncio.to_thread(self._remove_player_blocking, list_type, name)
+
+    async def get_properties(self) -> dict[str, Any]:
+        return await asyncio.to_thread(self._get_properties_blocking)
+
+    async def set_property(self, option: str, value: Any) -> None:
+        await asyncio.to_thread(self._set_property_blocking, option, value)
+
+    async def send_command(self, cmd: str) -> None:
+        with self._lock:
+            wss = self.server.wss()
+        await wss.connect()
+        try:
+            await wss.command(cmd)
+            await asyncio.sleep(0.5)
+        finally:
+            await wss.close()
+

@@ -53,17 +53,37 @@ class AutomationCog(commands.Cog):
         await self.bot.wait_until_ready()
         log.info('Autostart/autostop monitor started.')
 
-    async def _tick(self):
-        if not (self.state.autostart_enabled or self.state.autostop_enabled):
-            self._empty_since = None
-            return
+    async def _update_presence(self, status: str, players_count: int, slots: int):
+        status = status.lower()
+        if status == 'online':
+            activity_text = f'Minecraft: {players_count}/{slots} players 🎮'
+            activity_type = discord.ActivityType.playing
+        elif status in ('starting', 'loading', 'preparing'):
+            activity_text = 'Server starting... ⏳'
+            activity_type = discord.ActivityType.watching
+        elif status == 'stopping':
+            activity_text = 'Server stopping... 🛑'
+            activity_type = discord.ActivityType.watching
+        else:
+            activity_text = 'Server offline 🔴'
+            activity_type = discord.ActivityType.watching
 
+        await self.bot.change_presence(
+            activity=discord.Activity(type=activity_type, name=activity_text)
+        )
+
+    async def _tick(self):
         ok = await self.aternos.fetch()
         if not ok:
             log.error('[Monitor] Could not fetch server status — skipping this cycle.')
             return
 
         status = self.aternos.server.status.lower()
+        players_count = self.aternos.server.players_count
+        slots = self.aternos.server.slots
+
+        # Update activity presence
+        await self._update_presence(status, players_count, slots)
 
         if status == 'offline':
             self._empty_since = None
@@ -78,7 +98,7 @@ class AutomationCog(commands.Cog):
             self._empty_since = None
             return
 
-        if self.aternos.server.players_count > 0:
+        if players_count > 0:
             self._empty_since = None
             return
 

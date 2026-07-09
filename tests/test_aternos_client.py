@@ -4,6 +4,49 @@ import bot.aternos_client as aternos_client
 from bot.aternos_client import AternosError, AternosManager
 
 
+class FakePlayersList:
+    def __init__(self, list_type):
+        self.list_type = list_type
+        self.players = ["player1", "player2"]
+
+    def list_players(self, cache=False):
+        return self.players
+
+    def add(self, name):
+        self.players.append(name)
+
+    def remove(self, name):
+        if name in self.players:
+            self.players.remove(name)
+
+
+class FakeAternosConfig:
+    def __init__(self):
+        self.props = {"difficulty": "easy", "pvp": True}
+
+    def get_server_props(self, proptyping=True):
+        return self.props
+
+    def set_server_prop(self, option, value):
+        self.props[option] = value
+
+
+class FakeAternosWss:
+    def __init__(self):
+        self.connected = False
+        self.closed = False
+        self.commands_sent = []
+
+    async def connect(self):
+        self.connected = True
+
+    async def command(self, cmd):
+        self.commands_sent.append(cmd)
+
+    async def close(self):
+        self.closed = True
+
+
 class FakeServer:
     def __init__(self, subdomain='myserver', fail_fetch=False):
         self.subdomain = subdomain
@@ -14,6 +57,9 @@ class FakeServer:
         self.started = False
         self.stopped = False
         self.restarted = False
+        self._players = {}
+        self.config = FakeAternosConfig()
+        self._wss = FakeAternosWss()
 
     def fetch(self):
         self.fetch_calls += 1
@@ -28,6 +74,14 @@ class FakeServer:
 
     def restart(self):
         self.restarted = True
+
+    def players(self, list_type):
+        if list_type not in self._players:
+            self._players[list_type] = FakePlayersList(list_type)
+        return self._players[list_type]
+
+    def wss(self):
+        return self._wss
 
 
 class FakeAccount:
@@ -134,3 +188,43 @@ async def test_start_stop_restart():
 
     assert await manager.restart() is True
     assert manager.server.restarted is True
+
+
+async def test_player_lists():
+    from python_aternos import Lists
+    manager = AternosManager('user', 'pass')
+    manager.login_blocking(retries=1, base_delay=1.0)
+
+    players = await manager.list_players(Lists.whl)
+    assert players == ["player1", "player2"]
+
+    await manager.add_player(Lists.whl, "newplayer")
+    players = await manager.list_players(Lists.whl)
+    assert "newplayer" in players
+
+    await manager.remove_player(Lists.whl, "player1")
+    players = await manager.list_players(Lists.whl)
+    assert "player1" not in players
+
+
+async def test_properties():
+    manager = AternosManager('user', 'pass')
+    manager.login_blocking(retries=1, base_delay=1.0)
+
+    props = await manager.get_properties()
+    assert props["difficulty"] == "easy"
+
+    await manager.set_property("difficulty", "hard")
+    props = await manager.get_properties()
+    assert props["difficulty"] == "hard"
+
+
+async def test_send_command():
+    manager = AternosManager('user', 'pass')
+    manager.login_blocking(retries=1, base_delay=1.0)
+
+    await manager.send_command("say hello")
+    assert manager.server._wss.commands_sent == ["say hello"]
+    assert manager.server._wss.connected is True
+    assert manager.server._wss.closed is True
+

@@ -50,10 +50,25 @@ class GeneralCog(commands.Cog):
             ),
             inline=False,
         )
+        embed.add_field(
+            name='👥  /whitelist, /op, /ban',
+            value='Manage your server lists (list, add, or remove players).',
+            inline=False,
+        )
+        embed.add_field(
+            name='⚙️  /properties, /setproperty',
+            value='View or update server configuration properties.',
+            inline=False,
+        )
+        embed.add_field(
+            name='🖥️  /console',
+            value='Send direct console commands to your running Minecraft server.',
+            inline=False,
+        )
         if interaction.client.config.restricted:
             embed.add_field(
                 name='🔒  Restricted commands',
-                value='`/start`, `/stop`, `/restart`, `/autostart` and `/autostop` are limited to configured admins.',
+                value='`/start`, `/stop`, `/restart`, `/autostart`, `/autostop`, `/console`, `/setproperty`, and list modifications (`add`/`remove`) are limited to configured admins.',
                 inline=False,
             )
         embed.set_thumbnail(url='https://aternos.org/favicon.ico')

@@ -20,6 +20,7 @@ _EXTENSIONS = (
     'bot.cogs.general',
     'bot.cogs.server',
     'bot.cogs.automation',
+    'bot.cogs.management',
 )
 
 

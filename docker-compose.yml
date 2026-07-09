@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: aternos_discord_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./autostart_state.json:/app/autostart_state.json
