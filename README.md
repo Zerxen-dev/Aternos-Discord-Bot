@@ -32,8 +32,14 @@ A Discord bot for managing your Aternos Minecraft server directly from Discord �
 | `/restart` | Restart the Minecraft server (asks for confirmation) |
 | `/autostart enabled:<bool>` | Auto-restart the server whenever it goes offline |
 | `/autostop enabled:<bool> minutes:<int>` | Auto-stop the server after it's empty for `minutes` |
+| `/console command:<text>` | Send a console command directly to the running server |
+| `/whitelist <list\|add\|remove>` | Manage the Minecraft server whitelist |
+| `/op <list\|add\|remove>` | Manage server operators (OPs) |
+| `/ban <list\|add\|remove>` | Manage banned players |
+| `/properties` | View key server options (difficulty, game mode, whitelist, cracked, pvp, etc.) |
+| `/setproperty option:<name> value:<value>` | Update a server option (creative, true, false, 20, etc.) |
 
-If `ADMIN_ROLE_IDS` or `ADMIN_USER_IDS` is configured (see below), `/start`, `/stop`, `/restart`, `/autostart` and `/autostop` are restricted to those admins. All other commands stay open to everyone.
+If `ADMIN_ROLE_IDS` or `ADMIN_USER_IDS` is configured (see below), all server-altering commands (`/start`, `/stop`, `/restart`, `/autostart`, `/autostop`, `/console`, `/setproperty`, and list modifications like `add`/`remove`) are restricted to those admins. Commands that only fetch information (like `/status`, `/info`, `/properties`, and list `list` commands) remain open to everyone.
 
 ---
 
@@ -42,23 +48,6 @@ If `ADMIN_ROLE_IDS` or `ADMIN_USER_IDS` is configured (see below), `/start`, `/s
 - Python **3.9+**
 - A Discord bot token
 - An Aternos account with a Minecraft server
-
----
-
-## 📦 Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/SAMRAT69/Aternos-Discord-Bot.git
-cd Aternos-Discord-Bot
-```
-
-Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
 
 ---
 
@@ -84,11 +73,50 @@ Leaving `ADMIN_ROLE_IDS` and `ADMIN_USER_IDS` empty means everyone can use every
 
 ---
 
-## 🚀 Run the Bot
+## 📦 Installation & Run
 
+### Method 1: Local Run (Python)
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/SAMRAT69/Aternos-Discord-Bot.git
+   cd Aternos-Discord-Bot
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Copy `.env.example` to `.env` and fill in the required values:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Run the Bot:
+   ```bash
+   python main.py
+   ```
+
+### Method 2: Docker (Recommended for VPS)
+
+Build and run with docker-compose:
 ```bash
-python main.py
+docker-compose up -d --build
 ```
+
+### Method 3: Systemd Service (VPS Daemon)
+
+1. Copy the systemd service file template to your system services:
+   ```bash
+   cp aternos-bot.service /etc/systemd/system/aternos-bot.service
+   ```
+2. Reload systemd, enable and start the service:
+   ```bash
+   systemctl daemon-reload
+   systemctl enable aternos-bot
+   systemctl start aternos-bot
+   ```
 
 The launcher automatically:
 
