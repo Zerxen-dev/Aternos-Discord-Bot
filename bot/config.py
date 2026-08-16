@@ -51,6 +51,24 @@ class Config:
         return bool(self.admin_role_ids or self.admin_user_ids)
 
 
+def _load_dotenv_if_present(base_dir: Path) -> None:
+    env_file = base_dir / '.env'
+    if env_file.is_file():
+        try:
+            for line in env_file.read_text(encoding='utf-8').splitlines():
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                k, v = line.split('=', 1)
+                k, v = k.strip(), v.strip()
+                if (v.startswith('"') and v.endswith('"')) or (v.startswith("'") and v.endswith("'")):
+                    v = v[1:-1]
+                if k not in os.environ:
+                    os.environ[k] = v
+        except Exception:
+            pass
+
+
 def load_config(env: Optional[Mapping[str, str]] = None) -> Config:
     """Load and validate configuration from environment variables.
 
@@ -58,6 +76,9 @@ def load_config(env: Optional[Mapping[str, str]] = None) -> Config:
     is missing or malformed — callers should let this crash startup rather
     than silently falling back to defaults.
     """
+    base_dir = Path(__file__).resolve().parent.parent
+    if env is None:
+        _load_dotenv_if_present(base_dir)
     env = env if env is not None else os.environ
 
     def required(name: str) -> str:

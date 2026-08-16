@@ -13,6 +13,25 @@ if (major, minor) < (3, 9):
     print("ERROR: Python 3.9+ is required.")
     sys.exit(1)
 
+# ── Load .env if present ──────────────────────────────────
+env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.isfile(env_file):
+    try:
+        with open(env_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                k, v = k.strip(), v.strip()
+                if (v.startswith('"') and v.endswith('"')) or (v.startswith("'") and v.endswith("'")):
+                    v = v[1:-1]
+                if k not in os.environ:
+                    os.environ[k] = v
+        print("  ✔  Loaded local .env file", flush=True)
+    except Exception:
+        pass
+
 # ── 2. Validate required environment variables ─────────────
 print("\n[2/4] Checking environment variables ...", flush=True)
 required = {
