@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
+
 
 log = logging.getLogger('AternosBot.state')
 
@@ -21,6 +22,19 @@ class BotState:
     autostop_minutes: int = 20
     autostop_channel_id: Optional[int] = None
     autostop_set_by: Optional[str] = None
+
+    # Status Channel & Live Pinned Embed
+    status_channel_id: Optional[int] = None
+    status_message_id: Optional[int] = None
+    status_voice_channel_id: Optional[int] = None
+
+    # Alerts & Role Ping
+    alerts_channel_id: Optional[int] = None
+    alerts_role_id: Optional[int] = None
+    alerts_notify_on: str = 'all'  # 'all', 'online', 'offline', 'players'
+
+    # Scheduled Server Timers
+    schedules: list[dict[str, Any]] = field(default_factory=list)
 
     def save(self, path: Path) -> None:
         try:

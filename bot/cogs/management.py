@@ -350,6 +350,91 @@ class ManagementCog(commands.Cog):
             log.error(f'/setproperty error: {e}')
             await interaction.followup.send(embed=error_embed('Error setting property', e))
 
+    # ── /logs ─────────────────────────────────────────────────────────────
+
+    @app_commands.command(name='logs', description='Fetch recent console and server logs')
+    @app_commands.describe(lines='Number of log lines to retrieve (default: 40, max: 100)')
+    @is_authorized()
+    async def logs(self, interaction: discord.Interaction, lines: Optional[app_commands.Range[int, 5, 100]] = 40):
+        log.info(f'/logs used by {interaction.user}: {lines} lines')
+        await interaction.response.defer()
+        try:
+            await self._fetch_or_raise()
+            log_text = await self.aternos.get_log(max_lines=lines or 40)
+            
+            # Truncate to fit within Discord embed field limit (approx 1900 chars)
+            if len(log_text) > 1850:
+                log_text = '... (truncated)\n' + log_text[-1800:]
+
+            embed = footer(
+                discord.Embed(
+                    title=f'📜  Recent Server Logs  ({lines} lines)',
+                    description=f'```{log_text}```',
+                    color=BLUE,
+                )
+            )
+            await interaction.followup.send(embed=embed)
+        except Exception as e:
+            log.error(f'/logs error: {e}')
+            await interaction.followup.send(embed=error_embed('Could not retrieve logs', e))
+
+    # ── /backup ───────────────────────────────────────────────────────────
+
+    backup_group = app_commands.Group(name='backup', description='Manage Aternos world backups')
+
+    @backup_group.command(name='create', description='Create a new world backup on Aternos')
+    @is_authorized()
+    async def backup_create(self, interaction: discord.Interaction):
+        log.info(f'/backup create used by {interaction.user}')
+        await interaction.response.defer()
+        try:
+            await self._fetch_or_raise()
+            await self.aternos.create_backup()
+            embed = footer(
+                discord.Embed(
+                    title='💾  Backup Created Successfully',
+                    description=(
+                        f'> A new backup for **{self.aternos.server.subdomain}** has been initiated!\n'
+                        '> Your world, inventory, and plugin data are safe.'
+                    ),
+                    color=GREEN,
+                )
+            )
+            await interaction.followup.send(embed=embed)
+        except Exception as e:
+            log.error(f'/backup create error: {e}')
+            await interaction.followup.send(embed=error_embed('Could not create backup', e))
+
+    @backup_group.command(name='list', description='List all world backups available on Aternos')
+    async def backup_list(self, interaction: discord.Interaction):
+        log.info(f'/backup list used by {interaction.user}')
+        await interaction.response.defer()
+        try:
+            await self._fetch_or_raise()
+            backups = await self.aternos.list_backups()
+            if not backups:
+                embed = footer(
+                    discord.Embed(
+                        title='💾  World Backups',
+                        description='No backups found on this Aternos account.\nUse `/backup create` to make your first backup!',
+                        color=YELLOW,
+                    )
+                )
+            else:
+                desc = '\n'.join([f"• **{b.get('name', 'Backup')}** — `{b.get('time', 'Unknown')}` ({b.get('size', 'N/A')})" for b in backups[:15]])
+                embed = footer(
+                    discord.Embed(
+                        title=f'💾  World Backups ({len(backups)})',
+                        description=desc,
+                        color=BLUE,
+                    )
+                )
+            await interaction.followup.send(embed=embed)
+        except Exception as e:
+            log.error(f'/backup list error: {e}')
+            await interaction.followup.send(embed=error_embed('Could not list backups', e))
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(ManagementCog(bot))
+

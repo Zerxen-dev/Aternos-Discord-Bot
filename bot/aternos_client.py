@@ -176,3 +176,74 @@ class AternosManager:
         finally:
             await wss.close()
 
+    # ── Backups & Logs ───────────────────────────────────────────────────────
+
+    def _list_backups_blocking(self) -> list[dict[str, Any]]:
+        with self._lock:
+            backups = []
+            try:
+                if hasattr(self.server, 'backups'):
+                    b_obj = self.server.backups()
+                    if isinstance(b_obj, list):
+                        raw_list = b_obj
+                    elif hasattr(b_obj, 'list_backups'):
+                        raw_list = b_obj.list_backups()
+                    elif hasattr(b_obj, 'get_backups'):
+                        raw_list = b_obj.get_backups()
+                    else:
+                        raw_list = list(b_obj)
+
+                    for b in raw_list:
+                        name = getattr(b, 'name', None) or getattr(b, 'title', None) or str(b)
+                        time_str = getattr(b, 'timestamp', None) or getattr(b, 'date', None) or getattr(b, 'time', 'Unknown')
+                        size = getattr(b, 'size', None) or getattr(b, 'size_human', 'N/A')
+                        backups.append({'name': str(name), 'time': str(time_str), 'size': str(size)})
+            except Exception as e:
+                log.warning(f'Could not fetch backups list: {e}')
+            return backups
+
+    def _create_backup_blocking(self) -> bool:
+        with self._lock:
+            try:
+                if hasattr(self.server, 'create_backup'):
+                    self.server.create_backup()
+                    return True
+                elif hasattr(self.server, 'backups'):
+                    b_obj = self.server.backups()
+                    if hasattr(b_obj, 'create'):
+                        b_obj.create()
+                        return True
+            except Exception as e:
+                log.error(f'create_backup failed: {e}')
+                raise AternosError(f'Backup creation failed: {e}') from e
+        return False
+
+    def _get_log_blocking(self, max_lines: int = 50) -> str:
+        with self._lock:
+            try:
+                # Try via files API
+                if hasattr(self.server, 'files'):
+                    files_mgr = self.server.files()
+                    for log_path in ('/logs/latest.log', 'logs/latest.log', '/crash-reports', 'crash-reports'):
+                        try:
+                            f = files_mgr.get_file(log_path)
+                            content = getattr(f, 'content', None) or getattr(f, 'text', None)
+                            if content:
+                                lines = content.strip().splitlines()
+                                return '\n'.join(lines[-max_lines:])
+                        except Exception:
+                            continue
+            except Exception as e:
+                log.warning(f'Log retrieval from files API failed: {e}')
+
+            return 'No recent log content available or server is offline.'
+
+    async def list_backups(self) -> list[dict[str, Any]]:
+        return await asyncio.to_thread(self._list_backups_blocking)
+
+    async def create_backup(self) -> bool:
+        return await asyncio.to_thread(self._create_backup_blocking)
+
+    async def get_log(self, max_lines: int = 50) -> str:
+        return await asyncio.to_thread(self._get_log_blocking, max_lines)
+

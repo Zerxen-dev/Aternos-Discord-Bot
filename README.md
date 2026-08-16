@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/badge/license-MIT-ff375f?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android%20Termux%20%7C%20Linux%20%7C%20Windows%20%7C%20macOS%20%7C%20Docker-ffd60a?style=flat-square)](https://github.com/Zerxen-dev/Aternos-Discord-Bot)
 
-**Aternos Discord Bot** gives you complete remote management over your Aternos Minecraft server right inside Discord — interactive button control panels, live player stats, console execution, whitelist/op/ban management, and smart auto-start & auto-stop routines.
+**Aternos Discord Bot** gives you complete remote control over your Aternos Minecraft server right inside Discord — interactive button control panels, live auto-updating status embeds, server alerts with role pings, scheduled timers, one-click world backups, live console/crash logs, and automated auto-start & auto-stop routines.
 
 </div>
 
@@ -17,8 +17,11 @@
 ## ✨ Features
 
 - 🎮 **Interactive Control Panel (`/panel`)**: One-click Start, Stop, Restart, and live status refresh buttons.
-- ⚡ **Full Server Lifecycle**: Start, stop, and restart with confirmation modals on destructive actions.
-- 📊 **Real-Time Live Status (`/status`, `/info`)**: Live player count, maximum slots, TPS/RAM stats, software version, and port.
+- 🟢 **Live Auto-Updating Status Channel (`/statuschannel`)**: Dedicated channel with a continuously updating rich embed and dynamic voice channel name (e.g. `🟢 4/20 Online`).
+- 🔔 **Server Online & Player Alerts (`/alerts`)**: Dispatch notifications to a Discord channel with `@Role` pings when the server comes online, goes offline, or players join/leave.
+- ⏰ **Automated Server Scheduler (`/schedule`)**: Schedule automatic server start, stop, or restart routines at specific times (UTC).
+- 💾 **One-Click World Backups (`/backup`)**: Create and list Aternos backups directly from Discord so your world progress is always protected.
+- 📜 **Live Console & Crash Logs (`/logs`)**: Fetch recent server console lines and error reports directly into formatted Discord codeblocks.
 - 🤖 **Auto-Start**: Automatically monitors and restarts the server whenever it goes offline.
 - 💤 **Auto-Stop**: Automatically stops the server after sitting empty for a configurable duration to save Aternos queue time.
 - 🖥️ **Live Console Execution (`/console`)**: Execute Minecraft server commands directly from Discord.
@@ -29,7 +32,7 @@
 - ⚙️ **Live Server Properties (`/properties`, `/setproperty`)**: View and change difficulty, gamemode, cracked, PvP, and whitelist options on the fly.
 - 🛡️ **Role & User-Based Access Control**: Gate destructive and administrative commands behind Discord roles or user IDs.
 - 🔄 **Resilient Auto-Reconnect**: Automatic reconnection and exponential backoff on network dropouts.
-- 💾 **Persistent Settings**: Auto-start and auto-stop configurations persist across bot and host restarts.
+- 💾 **Persistent Settings**: All configurations, status channels, alerts, and schedules persist across bot and host restarts.
 
 ---
 
@@ -40,6 +43,16 @@
 | `/panel` | Control | Post an interactive embed panel with Start, Stop, Restart & Refresh buttons |
 | `/status` | Info | View live server status, player counts, and address |
 | `/info` | Info | View detailed server information (RAM, software, version, port) |
+| `/statuschannel set` | Live Status | Configure live auto-updating status text embed & dynamic voice channel name |
+| `/statuschannel remove` | Live Status | Disable live status channel auto-updates |
+| `/alerts set` | Alerts | Configure alert channel, role ping (`@Minecraft`), and event triggers |
+| `/alerts remove` | Alerts | Disable server state and player alerts |
+| `/schedule add` | Automation | Schedule automated start/stop/restart routines at specific times (UTC) |
+| `/schedule list` | Automation | View all active scheduled timers |
+| `/schedule remove` | Automation | Delete a scheduled timer by ID |
+| `/backup create` | Backups | Create a new world backup on Aternos immediately |
+| `/backup list` | Backups | List all existing world backups with timestamps and sizes |
+| `/logs` | Diagnostics | Fetch recent console logs and crash reports |
 | `/start` | Lifecycle | Start the Minecraft server |
 | `/stop` | Lifecycle | Stop the server (with confirmation prompt) |
 | `/restart` | Lifecycle | Restart the server (with confirmation prompt) |
@@ -55,7 +68,7 @@
 | `/hello` | General | Friendly greeting and latency check |
 
 > [!NOTE]
-> If `ADMIN_ROLE_IDS` or `ADMIN_USER_IDS` is set, all server-altering commands (`/start`, `/stop`, `/restart`, `/autostart`, `/autostop`, `/console`, `/setproperty`, list modifications) are restricted to authorized admins only. Informational commands remain accessible to everyone.
+> If `ADMIN_ROLE_IDS` or `ADMIN_USER_IDS` is set, all server-altering commands (`/start`, `/stop`, `/restart`, `/autostart`, `/autostop`, `/console`, `/setproperty`, `/backup create`, `/schedule add/remove`, and list modifications) are restricted to authorized admins only. Informational commands remain accessible to everyone.
 
 ---
 
@@ -84,8 +97,8 @@ STATE_FILE=autostart_state.json
 ### 📱 Method 1: Android (Termux)
 
 ```bash
-# 1. Update Termux and install Python & Git
-pkg update && pkg install python git -y
+# 1. Update Termux and install Python, development libraries & Git
+pkg update && pkg install python libxml2 libxslt git -y
 
 # 2. Clone repository
 git clone https://github.com/Zerxen-dev/Aternos-Discord-Bot.git
@@ -95,7 +108,7 @@ cd Aternos-Discord-Bot
 cp .env.example .env
 nano .env
 
-# 4. Launch
+# 4. Launch (dependencies auto-install on first run)
 python main.py
 ```
 
@@ -183,33 +196,24 @@ sudo systemctl status aternos-bot
 Aternos-Discord-Bot/
 ├── bot/
 │   ├── app.py              # Application entry point, logging & reconnect loop
-│   ├── aternos_client.py   # Thread-safe async wrapper around python-aternos
+│   ├── aternos_client.py   # Thread-safe async wrapper around python-aternos (backups, logs, commands)
 │   ├── config.py           # Environment variable loading & fail-fast validation
 │   ├── constants.py        # Embed colors and UI constants
 │   ├── core.py             # Discord bot client & cog loader
 │   ├── embeds.py           # Reusable embed builders and formatters
 │   ├── permissions.py      # Admin role and user authorization checks
-│   ├── state.py            # Persistent JSON state for autostart & autostop
+│   ├── state.py            # Persistent JSON state for autostart, status channels, alerts & schedules
 │   ├── views.py            # Interactive UI buttons & confirmation dialogs
 │   └── cogs/
-│       ├── automation.py   # /autostart, /autostop, and background watcher task
+│       ├── automation.py   # Live status channel, role ping alerts, scheduler, autostart & autostop
 │       ├── general.py      # /help, /hello
-│       ├── management.py   # /console, /whitelist, /op, /ban, /properties, /setproperty
+│       ├── management.py   # /console, /whitelist, /op, /ban, /properties, /setproperty, /backup, /logs
 │       └── server.py       # /status, /info, /panel, /start, /stop, /restart
 ├── main.py                 # Automated launcher & dependency installer
 ├── requirements.txt        # Production dependencies
 ├── Dockerfile              # Container definition
 ├── docker-compose.yml      # Multi-container orchestrator
 └── tests/                  # Pytest test suite
-```
-
----
-
-## 🧪 Running Tests
-
-```bash
-pip install -r requirements-dev.txt
-pytest
 ```
 
 ---

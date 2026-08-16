@@ -65,6 +65,31 @@ class GeneralCog(commands.Cog):
             value='Send direct console commands to your running Minecraft server.',
             inline=False,
         )
+        embed.add_field(
+            name='🟢  /statuschannel',
+            value='Set up a live auto-updating text embed and dynamic voice channel name.',
+            inline=False,
+        )
+        embed.add_field(
+            name='🔔  /alerts',
+            value='Get notified with role pings when server goes online/offline or players join/leave.',
+            inline=False,
+        )
+        embed.add_field(
+            name='⏰  /schedule',
+            value='Schedule automatic start, stop, or restart routines at specific times.',
+            inline=False,
+        )
+        embed.add_field(
+            name='💾  /backup',
+            value='Create and list Aternos world backups directly from Discord.',
+            inline=False,
+        )
+        embed.add_field(
+            name='📜  /logs',
+            value='Fetch recent server console and crash logs.',
+            inline=False,
+        )
         if interaction.client.config.restricted:
             embed.add_field(
                 name='🔒  Restricted commands',
