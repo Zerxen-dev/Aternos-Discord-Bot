@@ -1,231 +1,234 @@
 <div align="center">
 
-# 🤖 Aternos Discord Bot
-### *Manage, Monitor, Autostart & Control Your Aternos Minecraft Server Directly from Discord*
+# 🎮 Aternos Discord Bot v2.0
+### *The Ultimate Production-Grade Management Suite for Aternos Minecraft Servers*
 
-[![Python Version](https://img.shields.io/badge/python-3.9+-30d158?style=flat-square&logo=python)](https://python.org)
-[![Discord.py](https://img.shields.io/badge/discord.py-2.7+-0a84ff?style=flat-square&logo=discord)](https://github.com/Rapptz/discord.py)
-[![License](https://img.shields.io/badge/license-MIT-ff375f?style=flat-square)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Android%20Termux%20%7C%20Linux%20%7C%20Windows%20%7C%20macOS%20%7C%20Docker-ffd60a?style=flat-square)](https://github.com/Zerxen-dev/Aternos-Discord-Bot)
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-30d158?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Discord.py](https://img.shields.io/badge/discord.py-2.4+-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://github.com/Rapptz/discord.py)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Docker](https://img.shields.io/badge/Docker-Multi--Arch-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/Zerxen-dev/Aternos-Discord-Bot/pkgs/container/aternos-discord-bot)
+[![Tests Passing](https://img.shields.io/badge/Tests-52%2F52%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
+[![License](https://img.shields.io/badge/license-MIT-ff375f?style=for-the-badge)](LICENSE)
 
-**Aternos Discord Bot** gives you complete remote control over your Aternos Minecraft server right inside Discord — interactive button control panels, live auto-updating status embeds, server alerts with role pings, scheduled timers, one-click world backups, live console/crash logs, and automated auto-start & auto-stop routines.
+<br/>
+
+**Aternos Discord Bot** bridges Discord and your Aternos Minecraft servers with unprecedented power, reliability, and security. Control servers with one click, track uptime in real-time, speak to an integrated AI assistant, manage multiple servers simultaneously, and monitor everything through a sleek modern web dashboard.
+
+[🚀 Quick Start](#-quick-start) • [✨ Key Features](#-features) • [📊 Web Dashboard](#-web-management-suite) • [🤖 AI Assistant](#-ai-natural-language-assistant) • [📸 Commands](#-command-reference) • [🏗️ Architecture](#️-architecture) • [📖 Documentation](#-documentation)
+
+---
 
 </div>
+
+## 📢 The Elevator Pitch
+
+> *"Tired of opening the browser, logging in, solving captchas, and waiting in queue just to turn on your friend group's Minecraft server? **Aternos Discord Bot v2.0** turns Discord into a complete Minecraft operations cockpit. Run `/panel` for instant control buttons, `/ask "wake up the server"` for voice or text AI triggering, track live player counts dynamically in Discord voice channel titles, and view real-time uptime analytics on your private Web Dashboard. Free, fully open-source, and containerized for zero-friction self-hosting."*
 
 ---
 
 ## ✨ Features
 
-- 🎮 **Interactive Control Panel (`/panel`)**: One-click Start, Stop, Restart, and live status refresh buttons.
-- 🟢 **Live Auto-Updating Status Channel (`/statuschannel`)**: Dedicated channel with a continuously updating rich embed and dynamic voice channel name (e.g. `🟢 4/20 Online`).
-- 🔔 **Server Online & Player Alerts (`/alerts`)**: Dispatch notifications to a Discord channel with `@Role` pings when the server comes online, goes offline, or players join/leave.
-- ⏰ **Automated Server Scheduler (`/schedule`)**: Schedule automatic server start, stop, or restart routines at specific times (UTC).
-- 💾 **One-Click World Backups (`/backup`)**: Create and list Aternos backups directly from Discord so your world progress is always protected.
-- 📜 **Live Console & Crash Logs (`/logs`)**: Fetch recent server console lines and error reports directly into formatted Discord codeblocks.
-- 🤖 **Auto-Start**: Automatically monitors and restarts the server whenever it goes offline.
-- 💤 **Auto-Stop**: Automatically stops the server after sitting empty for a configurable duration to save Aternos queue time.
-- 🖥️ **Live Console Execution (`/console`)**: Execute Minecraft server commands directly from Discord.
-- 📋 **Player & Permission Lists**:
-  - Whitelist management (`/whitelist list`, `/whitelist add`, `/whitelist remove`)
-  - Operator management (`/op list`, `/op add`, `/op remove`)
-  - Ban management (`/ban list`, `/ban add`, `/ban remove`)
-- ⚙️ **Live Server Properties (`/properties`, `/setproperty`)**: View and change difficulty, gamemode, cracked, PvP, and whitelist options on the fly.
-- 🛡️ **Role & User-Based Access Control**: Gate destructive and administrative commands behind Discord roles or user IDs.
-- 🔄 **Resilient Auto-Reconnect**: Automatic reconnection and exponential backoff on network dropouts.
-- 💾 **Persistent Settings**: All configurations, status channels, alerts, and schedules persist across bot and host restarts.
-
----
-
-## 📸 Command Reference
-
-| Command | Category | Description |
+| Feature | Category | Description |
 | :--- | :---: | :--- |
-| `/panel` | Control | Post an interactive embed panel with Start, Stop, Restart & Refresh buttons |
-| `/status` | Info | View live server status, player counts, and address |
-| `/info` | Info | View detailed server information (RAM, software, version, port) |
-| `/statuschannel set` | Live Status | Configure live auto-updating status text embed & dynamic voice channel name |
-| `/statuschannel remove` | Live Status | Disable live status channel auto-updates |
-| `/alerts set` | Alerts | Configure alert channel, role ping (`@Minecraft`), and event triggers |
-| `/alerts remove` | Alerts | Disable server state and player alerts |
-| `/schedule add` | Automation | Schedule automated start/stop/restart routines at specific times (UTC) |
-| `/schedule list` | Automation | View all active scheduled timers |
-| `/schedule remove` | Automation | Delete a scheduled timer by ID |
-| `/backup create` | Backups | Create a new world backup on Aternos immediately |
-| `/backup list` | Backups | List all existing world backups with timestamps and sizes |
-| `/logs` | Diagnostics | Fetch recent console logs and crash reports |
-| `/start` | Lifecycle | Start the Minecraft server |
-| `/stop` | Lifecycle | Stop the server (with confirmation prompt) |
-| `/restart` | Lifecycle | Restart the server (with confirmation prompt) |
-| `/autostart enabled:<bool>` | Automation | Automatically restart the server when it goes offline |
-| `/autostop enabled:<bool> minutes:<int>` | Automation | Automatically stop the server after it remains empty |
-| `/console command:<text>` | Management | Send a console command directly to the running server |
-| `/whitelist <list\|add\|remove>` | Management | View, add, or remove players from the server whitelist |
-| `/op <list\|add\|remove>` | Management | View, grant, or revoke server Operator (OP) status |
-| `/ban <list\|add\|remove>` | Management | View, ban, or unban players |
-| `/properties` | Settings | View key server configuration (gamemode, difficulty, pvp, etc.) |
-| `/setproperty option:<name> value:<val>` | Settings | Update a server configuration option live |
-| `/help` | General | Display the interactive command guide |
-| `/hello` | General | Friendly greeting and latency check |
-
-> [!NOTE]
-> If `ADMIN_ROLE_IDS` or `ADMIN_USER_IDS` is set, all server-altering commands (`/start`, `/stop`, `/restart`, `/autostart`, `/autostop`, `/console`, `/setproperty`, `/backup create`, `/schedule add/remove`, and list modifications) are restricted to authorized admins only. Informational commands remain accessible to everyone.
+| 🎛️ **Interactive Panel (`/panel`)** | Control | One-click Start, Stop, Restart, and Status buttons with confirmation guards. |
+| 📊 **Web Dashboard & REST API** | Web Suite | Responsive modern FastAPI web panel (`:8080`) with live telemetry, uptime charts & logs. |
+| 🤖 **AI Assistant (`/ask`)** | Intelligence | Google Gemini & OpenAI natural language intent parser with deterministic fallback. |
+| 🗂️ **Multi-Server Support** | Multi-Tenancy | Seamlessly list and switch between multiple servers (`/servers list`, `/servers select`). |
+| 🟢 **Live Auto-Updating Channels** | Monitoring | Live auto-refreshing status embed + dynamic voice channel title (`🟢 4/20 Online`). |
+| 🔔 **State & Player Alerts** | Notifications | Instant channel notifications with role pings (`@Minecraft`) on online, offline, joins. |
+| ⏰ **Automated Scheduler** | Automation | Scheduled start/stop/restart routines with UTC timers and interactive modal creation. |
+| 🤖 **Auto-Start & Auto-Stop** | Reliability | Automatically reboot on crash; automatically shut down when empty after *N* minutes. |
+| 💾 **One-Click Backups** | Preservation | Create and list world backups with pagination directly from Discord. |
+| 📜 **Live Console & Injection Filter**| Management | Send commands safely (`/console`) and view recent log lines (`/logs`). |
+| 🛡️ **Role & Rate-Limit Security** | Security | Sliding-window command rate limiting, token sanitization, and role permission gates. |
+| 📈 **Observability & Metrics** | Diagnostics | Prometheus `/metrics` endpoint, structured JSON logging, and `/stats` command. |
 
 ---
 
-## ⚙️ Environment Variables
+## 🏗️ Architecture
 
-Copy `.env.example` to `.env` and fill in your credentials:
+```mermaid
+flowchart TD
+    subgraph Discord Client
+        U[Discord User / Admin] -->|Slash Commands & Buttons| D[discord.py Bot Client]
+    end
 
-```env
-# Required
-DISCORD_TOKEN=your_discord_bot_token
-ATERNOS_USER=your_aternos_username
-ATERNOS_PASS=your_aternos_password
+    subgraph Bot Runtime [Aternos Discord Bot v2.0]
+        D --> C[Cogs Layer\n• General & Stats\n• Server Controls\n• Multi-Server\n• Automation\n• AI Assistant]
+        C --> S[Services Layer]
+        
+        subgraph Core Services
+            S --> AS[AternosManager\nThread Lock & Backoff]
+            S --> AI[AIService\nGemini / OpenAI / Heuristic]
+            S --> MS[MetricsManager\nPrometheus Exporter]
+            S --> WS[FastAPI Web Engine\nDashboard & REST API]
+            S --> ST[BotState\nAtomic JSON Persistence]
+        end
+    end
 
-# Optional
-ADMIN_ROLE_IDS=               # Comma-separated Discord role IDs allowed to manage the server
-ADMIN_USER_IDS=               # Comma-separated Discord user IDs allowed to manage the server
-AUTOSTART_POLL_SECONDS=60     # How often the bot polls server status (default: 60s)
-AUTOSTOP_DEFAULT_MINUTES=20   # Default idle minutes before autostop (default: 20m)
-STATE_FILE=autostart_state.json
+    subgraph External Infrastructure
+        AS <-->|Session Sync / Queue Token| AT[Aternos Servers & Minecraft Console]
+        WS <-->|HTTP / API Key| BR[Web Browser / Dashboard]
+        WS <-->|Metrics Scrape| PM[Prometheus & Grafana]
+        AI <-->|LLM Intent Classification| GEM[Google Gemini / OpenAI]
+    end
 ```
 
 ---
 
-## 📦 Installation & Setup
+## 🚀 Quick Start
 
-### 📱 Method 1: Android (Termux)
+### ⚡ One-Liner with Docker (Recommended)
 
-```bash
-# 1. Update Termux and install Python, development libraries & Git
-pkg update && pkg install python libxml2 libxslt git -y
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Zerxen-dev/Aternos-Discord-Bot.git
+   cd Aternos-Discord-Bot
+   ```
 
-# 2. Clone repository
-git clone https://github.com/Zerxen-dev/Aternos-Discord-Bot.git
-cd Aternos-Discord-Bot
+2. **Configure your credentials:**
+   ```bash
+   cp .env.example .env
+   # Edit with your credentials
+   nano .env
+   ```
 
-# 3. Configure environment
-cp .env.example .env
-nano .env
-
-# 4. Launch (dependencies auto-install on first run)
-python main.py
-```
-
----
-
-### 🐧 Method 2: Linux / VPS (Ubuntu, Debian, Arch)
-
-```bash
-# 1. Install Python 3.9+ & Git
-sudo apt update && sudo apt install python3 python3-pip git -y
-
-# 2. Clone repository
-git clone https://github.com/Zerxen-dev/Aternos-Discord-Bot.git
-cd Aternos-Discord-Bot
-
-# 3. Configure environment
-cp .env.example .env
-nano .env
-
-# 4. Launch
-python3 main.py
-```
+3. **Spin up with Docker Compose:**
+   ```bash
+   docker compose up -d
+   ```
+   Open `http://localhost:8080` to access the Web Dashboard!
 
 ---
 
-### 🪟 Method 3: Windows (PowerShell / Command Prompt)
-
-1. Install **[Python 3.9+](https://www.python.org)** (make sure to check *"Add Python to PATH"*).
-2. Open PowerShell or Command Prompt:
-
-```powershell
-# Clone and enter directory
-git clone https://github.com/Zerxen-dev/Aternos-Discord-Bot.git
-cd Aternos-Discord-Bot
-
-# Copy configuration
-copy .env.example .env
-
-# Edit .env with your favorite editor (e.g. notepad .env)
-notepad .env
-
-# Run launcher
-python main.py
-```
-
----
-
-### 🐳 Method 4: Docker & Docker Compose
+### 🐍 Manual Installation (Linux / macOS / Windows / Termux)
 
 ```bash
 # 1. Clone repository
 git clone https://github.com/Zerxen-dev/Aternos-Discord-Bot.git
 cd Aternos-Discord-Bot
 
-# 2. Configure .env
+# 2. Create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Configure environment
 cp .env.example .env
 nano .env
 
-# 3. Build & start container
-docker-compose up -d --build
+# 5. Run the bot
+python main.py
 ```
 
 ---
 
-### 🛠 Method 5: Systemd Service (Linux Background Daemon)
+## 📊 Web Management Suite
 
-```bash
-# 1. Copy service template
-sudo cp aternos-bot.service /etc/systemd/system/aternos-bot.service
+The built-in FastAPI dashboard provides an administrative overview accessible from any desktop or mobile browser:
 
-# 2. Reload and enable
-sudo systemctl daemon-reload
-sudo systemctl enable aternos-bot
-sudo systemctl start aternos-bot
+- **Live Heartbeat**: Real-time status badge (Online, Offline, Starting, Stopping).
+- **Hardware Telemetry**: Memory allocation (RAM), port, software type, and version.
+- **Uptime Bar Chart**: Historical timeline visualizing the last 120 polling intervals.
+- **Direct Controls**: Secure Start, Stop, and Restart triggers.
+- **Live Console Logs**: Read-only log viewer for inspecting crashes or server activity.
 
-# Check status
-sudo systemctl status aternos-bot
+Access the dashboard at `http://your-host:8080/?key=YOUR_WEB_API_KEY`.  
+See the [Web Dashboard Guide](docs/web-dashboard.md) for full REST API details.
+
+---
+
+## 🤖 AI Natural Language Assistant
+
+Ask questions conversationally with `/ask query:<text>`:
+
+```
+/ask query:Is anyone online right now?
+> 🔍 Checking who is currently playing on the server.
+> 👥 Online Players: Alex, Steve (2/20)
+
+/ask query:Start up the server please
+> ⏳ Triggering Minecraft server startup routine...
 ```
 
----
-
-## 🏗 Project Architecture
-
-```text
-Aternos-Discord-Bot/
-├── bot/
-│   ├── app.py              # Application entry point, logging & reconnect loop
-│   ├── aternos_client.py   # Thread-safe async wrapper around python-aternos (backups, logs, commands)
-│   ├── config.py           # Environment variable loading & fail-fast validation
-│   ├── constants.py        # Embed colors and UI constants
-│   ├── core.py             # Discord bot client & cog loader
-│   ├── embeds.py           # Reusable embed builders and formatters
-│   ├── permissions.py      # Admin role and user authorization checks
-│   ├── state.py            # Persistent JSON state for autostart, status channels, alerts & schedules
-│   ├── views.py            # Interactive UI buttons & confirmation dialogs
-│   └── cogs/
-│       ├── automation.py   # Live status channel, role ping alerts, scheduler, autostart & autostop
-│       ├── general.py      # /help, /hello
-│       ├── management.py   # /console, /whitelist, /op, /ban, /properties, /setproperty, /backup, /logs
-│       └── server.py       # /status, /info, /panel, /start, /stop, /restart
-├── main.py                 # Automated launcher & dependency installer
-├── requirements.txt        # Production dependencies
-├── Dockerfile              # Container definition
-├── docker-compose.yml      # Multi-container orchestrator
-└── tests/                  # Pytest test suite
-```
+Supports **Google Gemini 1.5**, **OpenAI GPT-4o-mini**, and a **zero-dependency deterministic offline NLP engine**. See the [AI Assistant Guide](docs/ai-assistant.md).
 
 ---
 
-## ❤️ Credits
+## 📸 Command Reference
 
-**Created by: Zerxen-dev**  
-- **GitHub**: [https://github.com/Zerxen-dev](https://github.com/Zerxen-dev)
-- **Repository**: [https://github.com/Zerxen-dev/Aternos-Discord-Bot](https://github.com/Zerxen-dev/Aternos-Discord-Bot)
+### Server Operations
+- `/panel` — Display the interactive control panel with Start, Stop, Restart & Refresh buttons.
+- `/start` — Start the Minecraft server.
+- `/stop` — Safely stop the server with a confirmation prompt.
+- `/restart` — Reboot the server with confirmation.
+- `/status` — View real-time server status, player counts, and connection address.
+- `/info` — Detailed specs (RAM, software, edition, port, motd).
+- `/stats` — Bot runtime statistics (latency, uptime, guilds, memory).
+
+### Multi-Server Operations
+- `/servers list` — Display all Minecraft servers under your Aternos account.
+- `/servers select identifier:<index|subdomain>` — Switch active server dynamically.
+
+### AI Commands
+- `/ask query:<text>` — Natural language command execution via Gemini/OpenAI/local NLP.
+
+### Automation & Scheduling
+- `/statuschannel set` — Configure live auto-updating status embed & dynamic voice channel name.
+- `/statuschannel remove` — Disable live status channel updates.
+- `/alerts set` — Configure alert channel, role ping (`@Minecraft`), and notification triggers.
+- `/alerts remove` — Disable alerts.
+- `/schedule add` — Schedule automated start/stop timers via slash command.
+- `/schedule modal` — Interactive modal dialog for configuring scheduled timers.
+- `/schedule list` — View all scheduled timers.
+- `/schedule remove id:<int>` — Delete a scheduled timer.
+- `/autostart enabled:<bool>` — Enable/disable automatic crash/offline restarts.
+- `/autostop enabled:<bool> minutes:<int>` — Enable/disable automatic shutdown on empty server.
+
+### Server Administration
+- `/console command:<text>` — Safely dispatch commands to Minecraft console (sanitized & rate-limited).
+- `/backup create` — Create an instant Aternos world backup.
+- `/backup list` — Browse existing world backups with interactive pagination.
+- `/whitelist <list|add|remove>` — Manage whitelisted players with pagination.
+- `/op <list|add|remove>` — Manage server operators.
+- `/ban <list|add|remove>` — Manage banned players.
+- `/properties` — View live server properties.
+- `/setproperty` — Update server settings with interactive Discord Modals.
 
 ---
 
-## 📜 License
+## 🛡️ Security & Reliability
 
-This project is licensed under the [MIT License](LICENSE).
+- **Safe Atomic State**: State saves use write-to-temp and atomic `os.replace` to prevent corrupted JSON configurations during sudden host reboots.
+- **Command Sanitization**: Strict input validation strips terminal control characters, shell-chaining operators (`&&`, `;`, `||`), and length violations.
+- **Sliding-Window Rate Limiting**: Anti-spam protection prevents accidental or malicious command flooding.
+- **Role Permission Guards**: Administrative actions can be restricted to specific Discord roles (`ADMIN_ROLE_IDS`) or user IDs (`ADMIN_USER_IDS`).
+- **Prometheus Metrics**: Export telemetry at `/metrics` for monitoring via Grafana or Datadog.
+
+---
+
+## 📖 Documentation
+
+- [VPS Deployment & Reverse Proxy Setup](docs/vps-deployment.md)
+- [Aternos Credentials & Session Security](docs/aternos-credentials.md)
+- [Web Dashboard & REST API Reference](docs/web-dashboard.md)
+- [Multi-Server Setup](docs/multi-server.md)
+- [AI Assistant Configuration](docs/ai-assistant.md)
+
+---
+
+## 🤝 Contributing
+
+Contributions make the open-source community thrive! Please see [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for contribution guidelines.
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+
+<div align="center">
+  <b>Built with ❤️ for Minecraft server operators worldwide</b>
+</div>

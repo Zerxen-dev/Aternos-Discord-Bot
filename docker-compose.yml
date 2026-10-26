@@ -2,10 +2,21 @@ version: '3.8'
 
 services:
   bot:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: aternos_discord_bot
     restart: unless-stopped
+    ports:
+      - "8080:8080"
     env_file:
       - .env
     volumes:
+      - ./data:/app/data
       - ./autostart_state.json:/app/autostart_state.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
