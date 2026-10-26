@@ -1,0 +1,21 @@
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = [
+    "E501",  # line too long
+    "F401",  # unused import
+    "F841",  # unused variable
+    "E402",  # module level import not at top of file
+    "E722",  # do not use bare except
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --disable-warnings"
+testpaths = [
+    "tests",
+]
+asyncio_mode = "auto"
