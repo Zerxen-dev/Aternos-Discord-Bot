@@ -1,19 +1,28 @@
-"""Environment-based configuration with fail-fast validation."""
+"""Environment-based configuration with Pydantic Settings and fail-fast validation."""
 
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Mapping, Optional
+from typing import Any, Mapping, Optional
+
+from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ConfigError(RuntimeError):
     """Raised when required configuration is missing or invalid."""
 
 
-def _split_ids(raw: str) -> frozenset:
-    ids = set()
+def _split_ids(raw: Any) -> frozenset[int]:
+    if isinstance(raw, (set, frozenset)):
+        return frozenset(raw)
+    if isinstance(raw, (list, tuple)):
+        return frozenset(int(x) for x in raw)
+    if not isinstance(raw, str):
+        return frozenset()
+
+    ids: set[int] = set()
     for chunk in raw.split(','):
         chunk = chunk.strip()
         if not chunk:
@@ -24,26 +33,70 @@ def _split_ids(raw: str) -> frozenset:
     return frozenset(ids)
 
 
-def _int_env(env: Mapping[str, str], name: str, default: int) -> int:
-    raw = (env.get(name) or '').strip()
-    if not raw:
-        return default
-    try:
-        return int(raw)
-    except ValueError as e:
-        raise ConfigError(f"Environment variable {name} must be an integer, got '{raw}'.") from e
+class Config(BaseSettings):
+    """Application configuration with Pydantic v2 validation."""
 
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_file_encoding='utf-8',
+        extra='ignore',
+        arbitrary_types_allowed=True,
+    )
 
-@dataclass(frozen=True)
-class Config:
-    discord_token: str
-    aternos_user: str
-    aternos_pass: str
-    admin_role_ids: frozenset = field(default_factory=frozenset)
-    admin_user_ids: frozenset = field(default_factory=frozenset)
-    autostart_poll_seconds: int = 60
-    autostop_default_minutes: int = 20
-    state_file: Optional[Path] = None
+    discord_token: str = Field(..., alias='DISCORD_TOKEN')
+    aternos_user: str = Field(..., alias='ATERNOS_USER')
+    aternos_pass: str = Field(..., alias='ATERNOS_PASS')
+
+    admin_role_ids: frozenset[int] = Field(default_factory=frozenset, alias='ADMIN_ROLE_IDS')
+    admin_user_ids: frozenset[int] = Field(default_factory=frozenset, alias='ADMIN_USER_IDS')
+
+    autostart_poll_seconds: int = Field(default=60, alias='AUTOSTART_POLL_SECONDS')
+    autostop_default_minutes: int = Field(default=20, alias='AUTOSTOP_DEFAULT_MINUTES')
+    state_file: Optional[Path] = Field(default=None, alias='STATE_FILE')
+
+    # Enhanced Features
+    web_dashboard_enabled: bool = Field(default=True, alias='WEB_DASHBOARD_ENABLED')
+    web_dashboard_port: int = Field(default=8080, alias='WEB_DASHBOARD_PORT')
+    web_dashboard_host: str = Field(default='0.0.0.0', alias='WEB_DASHBOARD_HOST')
+    web_api_key: Optional[str] = Field(default=None, alias='WEB_API_KEY')
+
+    ai_enabled: bool = Field(default=False, alias='AI_ENABLED')
+    ai_provider: str = Field(default='gemini', alias='AI_PROVIDER')
+    ai_api_key: Optional[str] = Field(default=None, alias='AI_API_KEY')
+
+    sentry_dsn: Optional[str] = Field(default=None, alias='SENTRY_DSN')
+    metrics_enabled: bool = Field(default=True, alias='METRICS_ENABLED')
+    active_server_index: int = Field(default=0, alias='ACTIVE_SERVER_INDEX')
+
+    def __init__(self, **values: Any):
+        # Support positional and lowercase kwargs for backward compatibility
+        try:
+            super().__init__(**values)
+        except ConfigError:
+            raise
+        except Exception as e:
+            raise ConfigError(f"Configuration error: {e}") from e
+
+    @field_validator('admin_role_ids', 'admin_user_ids', mode='before')
+    @classmethod
+    def validate_ids(cls, v: Any) -> frozenset[int]:
+        return _split_ids(v)
+
+    @field_validator('autostart_poll_seconds', 'autostop_default_minutes', 'web_dashboard_port', mode='before')
+    @classmethod
+    def validate_ints(cls, v: Any, info) -> int:
+        if v is None:
+            return 60 if info.field_name == 'autostart_poll_seconds' else 20
+        if isinstance(v, int):
+            return v
+        raw = str(v).strip()
+        if not raw:
+            return 60 if info.field_name == 'autostart_poll_seconds' else 20
+        try:
+            return int(raw)
+        except ValueError as e:
+            field_env = info.field_name.upper()
+            raise ConfigError(f"Environment variable {field_env} must be an integer, got '{raw}'.") from e
 
     @property
     def restricted(self) -> bool:
@@ -72,35 +125,39 @@ def _load_dotenv_if_present(base_dir: Path) -> None:
 def load_config(env: Optional[Mapping[str, str]] = None) -> Config:
     """Load and validate configuration from environment variables.
 
-    Raises ConfigError with a clear, actionable message if anything required
-    is missing or malformed — callers should let this crash startup rather
-    than silently falling back to defaults.
+    Raises ConfigError with an actionable message if required parameters are missing.
     """
     base_dir = Path(__file__).resolve().parent.parent
     if env is None:
         _load_dotenv_if_present(base_dir)
-    env = env if env is not None else os.environ
+        env_dict = dict(os.environ)
+    else:
+        env_dict = dict(env)
 
-    def required(name: str) -> str:
-        value = (env.get(name) or '').strip()
-        if not value:
+    # Validate required keys explicitly for clear error messages
+    required_keys = [
+        ('DISCORD_TOKEN', 'discord_token'),
+        ('ATERNOS_USER', 'aternos_user'),
+        ('ATERNOS_PASS', 'aternos_pass'),
+    ]
+    for key, attr in required_keys:
+        val = env_dict.get(key)
+        if val is None:
+            val = env_dict.get(attr)
+        if val is None or not str(val).strip():
             raise ConfigError(
-                f"Missing required environment variable: {name}. "
+                f"Missing required environment variable: {key}. "
                 "Set it in your .env file (local) or the Variables tab of your "
                 "hosting panel, then restart the bot."
             )
-        return value
 
-    base_dir = Path(__file__).resolve().parent.parent
-    state_file = Path(env.get('STATE_FILE') or (base_dir / 'autostart_state.json'))
+    # Set default state_file if not provided
+    if not env_dict.get('STATE_FILE') and not env_dict.get('state_file'):
+        env_dict['STATE_FILE'] = str(base_dir / 'autostart_state.json')
 
-    return Config(
-        discord_token=required('DISCORD_TOKEN'),
-        aternos_user=required('ATERNOS_USER'),
-        aternos_pass=required('ATERNOS_PASS'),
-        admin_role_ids=_split_ids(env.get('ADMIN_ROLE_IDS', '')),
-        admin_user_ids=_split_ids(env.get('ADMIN_USER_IDS', '')),
-        autostart_poll_seconds=_int_env(env, 'AUTOSTART_POLL_SECONDS', 60),
-        autostop_default_minutes=_int_env(env, 'AUTOSTOP_DEFAULT_MINUTES', 20),
-        state_file=state_file,
-    )
+    try:
+        return Config(**env_dict)
+    except ConfigError:
+        raise
+    except Exception as e:
+        raise ConfigError(f"Configuration validation failed: {e}") from e

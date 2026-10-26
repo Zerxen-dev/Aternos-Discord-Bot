@@ -116,12 +116,6 @@ try:
         if "check(six.get_function_code(check))" not in source:
             print("  js2py: target line not found — skipping.", flush=True)
         else:
-            # Regex normalises ALL states in one pass:
-            #   • bare call (unpatched)
-            #   • correctly wrapped in try/except  (already patched)
-            #   • broken double-wrapped try/try    (corrupted by old patcher)
-            # It matches: optional leading "try:\n" lines, the call itself
-            # (with any indentation), then optional trailing except/pass lines.
             pattern = re.compile(
                 r"(?:[ \t]*try:[ \t]*\r?\n)*"
                 r"[ \t]*check\(six\.get_function_code\(check\)\)[ \t]*\r?\n"
@@ -133,6 +127,35 @@ try:
             else:
                 injector.write_text(fixed, encoding="utf-8")
                 print("  js2py patch applied/repaired.", flush=True)
+
+        # Also patch fix_js_args for Python 3.14+ bytecode safety
+        source = injector.read_text(encoding="utf-8")
+        target_fargs = "code = append_arguments(six.get_function_code(func), ('this', 'arguments'))"
+        if target_fargs in source and "except Exception:\n        return func" not in source:
+            safe_fargs = (
+                "try:\n"
+                "        code = append_arguments(six.get_function_code(func), ('this', 'arguments'))\n"
+                "        result = types.FunctionType(\n"
+                "            code,\n"
+                "            six.get_function_globals(func),\n"
+                "            func.__name__,\n"
+                "            closure=six.get_function_closure(func))\n"
+                "        return result\n"
+                "    except Exception:\n"
+                "        return func"
+            )
+            old_block = (
+                "    code = append_arguments(six.get_function_code(func), ('this', 'arguments'))\n\n"
+                "    result = types.FunctionType(\n"
+                "        code,\n"
+                "        six.get_function_globals(func),\n"
+                "        func.__name__,\n"
+                "        closure=six.get_function_closure(func))\n"
+                "    return result"
+            )
+            if old_block in source:
+                injector.write_text(source.replace(old_block, safe_fargs), encoding="utf-8")
+                print("  js2py fix_js_args patch applied for Python 3.14+.", flush=True)
     else:
         print("  js2py not found — skipping patch.", flush=True)
 except Exception as e:
