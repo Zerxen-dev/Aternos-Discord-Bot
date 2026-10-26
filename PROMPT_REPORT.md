@@ -33,7 +33,6 @@ The following Antigravity skills were actively employed throughout this transfor
 ### Layered Modular Structure
 ```
 Aternosbot/
-├── .agents/skills/aternos-bot-expert/  # Domain knowledge base
 ├── .github/                           # CI/CD workflows, issue & PR templates
 │   ├── ISSUE_TEMPLATE/
 │   └── workflows/ (test.yml, docker.yml, release.yml, dependabot.yml)

@@ -6,3 +6,4 @@ autostart_state.json
 venv/
 *.egg-info/
 .pytest_cache/
+.agents/
