@@ -67,6 +67,7 @@ class Config(BaseSettings):
     sentry_dsn: Optional[str] = Field(default=None, alias='SENTRY_DSN')
     metrics_enabled: bool = Field(default=True, alias='METRICS_ENABLED')
     active_server_index: int = Field(default=0, alias='ACTIVE_SERVER_INDEX')
+    auto_backup_on_stop: bool = Field(default=False, alias='AUTO_BACKUP_ON_STOP')
 
     def __init__(self, **values: Any):
         # Support positional and lowercase kwargs for backward compatibility

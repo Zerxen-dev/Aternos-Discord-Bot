@@ -291,6 +291,13 @@ class ServerCog(commands.Cog):
             return
 
         try:
+            if getattr(self.config, 'auto_backup_on_stop', False):
+                try:
+                    log.info('Auto-backup on stop enabled: creating pre-shutdown backup...')
+                    await self.aternos.create_backup()
+                except Exception as be:
+                    log.warning(f'Pre-shutdown backup failed: {be}')
+
             stopped = await self.aternos.stop()
             if not stopped:
                 raise AternosError('Failed to send stop command to Aternos.')

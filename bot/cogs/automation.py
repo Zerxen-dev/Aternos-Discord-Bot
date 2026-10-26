@@ -409,6 +409,12 @@ class AutomationCog(commands.Cog):
 
     async def _do_autostop(self):
         log.info(f'[Autostop] Server empty for {self.state.autostop_minutes}+ minutes — stopping...')
+        if getattr(self.config, 'auto_backup_on_stop', False):
+            try:
+                log.info('[Autostop] Creating pre-shutdown backup...')
+                await self.aternos.create_backup()
+            except Exception as be:
+                log.warning(f'[Autostop] Pre-shutdown backup failed: {be}')
         stopped = await self.aternos.stop()
         channel = self._channel(self.state.autostop_channel_id)
         if not channel:

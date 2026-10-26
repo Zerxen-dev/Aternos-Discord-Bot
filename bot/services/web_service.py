@@ -127,6 +127,20 @@ def create_web_app(bot_instance: Any) -> FastAPI:
             MetricsManager.record_command('web_restart', False)
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app.post('/api/console/execute', dependencies=[Depends(verify_auth)])
+    async def trigger_console(request: Request):
+        try:
+            payload = await request.json()
+            raw_cmd = str(payload.get('command', '')).strip()
+            from ..utils.security import sanitize_console_command
+            cmd = sanitize_console_command(raw_cmd)
+            await bot_instance.aternos.send_command(cmd)
+            MetricsManager.record_command('web_console', True)
+            return {'success': True, 'command': cmd}
+        except Exception as e:
+            MetricsManager.record_command('web_console', False)
+            raise HTTPException(status_code=400, detail=str(e))
+
     @app.get('/', response_class=HTMLResponse, dependencies=[Depends(verify_auth)])
     @app.get('/dashboard', response_class=HTMLResponse, dependencies=[Depends(verify_auth)])
     async def dashboard_view():
@@ -255,7 +269,15 @@ def create_web_app(bot_instance: Any) -> FastAPI:
   <div class="container">
     <header>
       <div class="brand">
-        <span style="font-size: 1.75rem;">🎮</span>
+        <svg width="40" height="40" viewBox="0 0 512 512" style="border-radius: 10px; filter: drop-shadow(0 0 8px rgba(88,101,242,0.4));">
+          <rect width="512" height="512" rx="112" fill="#0b0f19" stroke="#1f293d" stroke-width="8" />
+          <path d="M 130 250 A 136 136 0 0 1 382 250" fill="none" stroke="#5865F2" stroke-width="26" stroke-linecap="round" />
+          <rect x="108" y="235" width="28" height="64" rx="14" fill="#5865F2" />
+          <rect x="376" y="235" width="28" height="64" rx="14" fill="#5865F2" />
+          <polygon points="256,150 360,208 256,266 152,208" fill="#10b981" stroke="#34d399" stroke-width="4" />
+          <polygon points="152,208 256,266 256,380 152,322" fill="#3b82f6" stroke="#60a5fa" stroke-width="4" />
+          <polygon points="256,266 360,208 360,322 256,380" fill="#6366f1" stroke="#818cf8" stroke-width="4" />
+        </svg>
         <div>
           <h1>Aternos Management Dashboard</h1>
           <p style="font-size: 0.85rem; color: var(--text-muted);">Real-time monitoring and server operations</p>
@@ -308,6 +330,11 @@ def create_web_app(bot_instance: Any) -> FastAPI:
         <span style="font-size: 0.75rem; color: var(--text-muted);">Auto-refreshed</span>
       </div>
       <div class="log-box" id="logBox">Loading recent server logs...</div>
+      <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+        <input id="terminalInput" type="text" placeholder="Type a Minecraft console command (e.g. say Hello World, time set day)..." style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid var(--card-border); color: #fff; padding: 0.6rem 0.85rem; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; outline: none;" onkeydown="if(event.key === 'Enter') sendConsoleCommand()" />
+        <button class="btn-primary" onclick="sendConsoleCommand()" style="padding: 0.6rem 1.25rem;">Execute ↵</button>
+      </div>
+      <div id="commandFeedback" style="font-size: 0.75rem; margin-top: 0.4rem; color: var(--text-muted);"></div>
     </div>
   </div>
 
@@ -373,6 +400,36 @@ def create_web_app(bot_instance: Any) -> FastAPI:
         setTimeout(fetchStatus, 1500);
       } catch (e) {
         alert('Request failed: ' + e);
+      }
+    }
+
+    async function sendConsoleCommand() {
+      const input = document.getElementById('terminalInput');
+      const feedback = document.getElementById('commandFeedback');
+      const cmd = input.value.trim();
+      if (!cmd) return;
+      
+      feedback.textContent = `Dispatching command: /${cmd}...`;
+      feedback.style.color = 'var(--text-muted)';
+      try {
+        const res = await fetch('/api/console/execute', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({command: cmd})
+        });
+        if (res.ok) {
+          feedback.textContent = `✔ Command executed successfully.`;
+          feedback.style.color = 'var(--success)';
+          input.value = '';
+          setTimeout(fetchLogs, 1200);
+        } else {
+          const err = await res.json();
+          feedback.textContent = `✖ Error: ${err.detail || 'Failed'}`;
+          feedback.style.color = 'var(--danger)';
+        }
+      } catch (e) {
+        feedback.textContent = `✖ Request failed: ${e.message}`;
+        feedback.style.color = 'var(--danger)';
       }
     }
 

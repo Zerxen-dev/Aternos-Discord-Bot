@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19" />
+      <stop offset="50%" stop-color="#111827" />
+      <stop offset="100%" stop-color="#070a10" />
+    </linearGradient>
+    <linearGradient id="cubeTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="cubeLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="cubeRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#4338ca" />
+    </linearGradient>
+    <linearGradient id="headphoneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5865F2" />
+      <stop offset="100%" stop-color="#3843b0" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded card -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" stroke="#1f293d" stroke-width="6" />
+
+  <!-- Outer Neon Glow Ring -->
+  <circle cx="256" cy="256" r="195" fill="none" stroke="#5865F2" stroke-width="4" opacity="0.3" stroke-dasharray="14 10" />
+  <circle cx="256" cy="256" r="175" fill="none" stroke="#10b981" stroke-width="2" opacity="0.4" />
+
+  <!-- Headphone Arc over the block -->
+  <path d="M 130 250 A 136 136 0 0 1 382 250" fill="none" stroke="url(#headphoneGrad)" stroke-width="22" stroke-linecap="round" filter="url(#glow)" />
+
+  <!-- Headphone Earcups -->
+  <rect x="108" y="235" width="28" height="64" rx="14" fill="#5865F2" filter="url(#glow)" />
+  <rect x="376" y="235" width="28" height="64" rx="14" fill="#5865F2" filter="url(#glow)" />
+
+  <!-- 3D Isometric Minecraft Server Block -->
+  <!-- Top Face (Green Grass / Server Top) -->
+  <polygon points="256,150 360,208 256,266 152,208" fill="url(#cubeTop)" stroke="#34d399" stroke-width="3" />
+  <!-- Top Face Grid Detail -->
+  <polygon points="256,170 326,208 256,246 186,208" fill="none" stroke="#6ee7b7" stroke-width="2" opacity="0.6" stroke-dasharray="4 4" />
+
+  <!-- Left Face (Blue Cyber Side) -->
+  <polygon points="152,208 256,266 256,380 152,322" fill="url(#cubeLeft)" stroke="#60a5fa" stroke-width="3" />
+  <!-- Left Face Server Server Rack LEDs -->
+  <circle cx="180" cy="275" r="5" fill="#10b981" filter="url(#glow)" />
+  <circle cx="200" cy="286" r="5" fill="#3b82f6" filter="url(#glow)" />
+  <circle cx="220" cy="297" r="5" fill="#10b981" filter="url(#glow)" />
+  
+  <line x1="175" y1="315" x2="235" y2="348" stroke="#93c5fd" stroke-width="3" opacity="0.7" stroke-linecap="round" />
+  <line x1="175" y1="335" x2="215" y2="357" stroke="#93c5fd" stroke-width="3" opacity="0.5" stroke-linecap="round" />
+
+  <!-- Right Face (Blurple / Discord Side) -->
+  <polygon points="256,266 360,208 360,322 256,380" fill="url(#cubeRight)" stroke="#818cf8" stroke-width="3" />
+  <!-- Discord Controller Mask on Right Face -->
+  <ellipse cx="308" cy="295" rx="22" ry="14" fill="#ffffff" opacity="0.9" />
+  <!-- Controller Eyes -->
+  <circle cx="300" cy="295" r="4" fill="#4338ca" />
+  <circle cx="316" cy="295" r="4" fill="#4338ca" />
+
+  <!-- Center Status Gem / Power Pulse -->
+  <polygon points="256,252 268,266 256,280 244,266" fill="#ffffff" filter="url(#glow)" />
+
+  <!-- Bottom Reflection / Shadow -->
+  <ellipse cx="256" cy="430" rx="120" ry="22" fill="#000000" opacity="0.5" filter="url(#glow)" />
+</svg>

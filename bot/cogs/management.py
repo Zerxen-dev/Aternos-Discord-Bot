@@ -33,6 +33,34 @@ class ManagementCog(commands.Cog):
         if not ok:
             raise AternosError('Could not reach Aternos after multiple retries.')
 
+    # ── Context Menu (User App Command) ──────────────────────────────────
+
+    @app_commands.context_menu(name="Check Server & Whitelist")
+    async def user_check_status(self, interaction: discord.Interaction, user: discord.Member):
+        """Right-click context menu to quickly check server status and inspect player."""
+        await interaction.response.defer(ephemeral=True)
+        try:
+            await self._fetch_or_raise()
+            server = self.aternos.server
+            name_guess = user.display_name
+            whitelisted = name_guess in (getattr(server, 'whitelist', []) or [])
+            embed = footer(
+                discord.Embed(
+                    title=f"👤 Player Inspector · {user.display_name}",
+                    description=(
+                        f"**Discord Member:** {user.mention}\n"
+                        f"**Server Status:** `{server.status.upper()}`\n"
+                        f"**Whitelisted:** `{'YES' if whitelisted else 'NO'}`\n"
+                        f"**Online Players:** `{server.players_count}/{server.slots}`"
+                    ),
+                    color=GREEN if whitelisted else BLUE,
+                )
+            )
+            embed.set_thumbnail(url=f"https://mc-heads.net/avatar/{name_guess}/64")
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        except Exception as e:
+            await interaction.followup.send(embed=error_embed("Error inspecting user", e), ephemeral=True)
+
     # ── /console ──────────────────────────────────────────────────────────
 
     @app_commands.command(name='console', description='Send a console command directly to the server')

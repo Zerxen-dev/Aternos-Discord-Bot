@@ -1,5 +1,13 @@
 <div align="center">
 
+<img src="assets/banner.svg" alt="Aternos Discord Bot Banner" width="100%"/>
+
+<br/><br/>
+
+<a href="#-features">
+  <img src="assets/logo.png" alt="Aternos Discord Bot Logo" width="130" style="border-radius: 28px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);"/>
+</a>
+
 # 🎮 Aternos Discord Bot v2.0
 ### *The Ultimate Production-Grade Management Suite for Aternos Minecraft Servers*
 
@@ -7,7 +15,7 @@
 [![Discord.py](https://img.shields.io/badge/discord.py-2.4+-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://github.com/Rapptz/discord.py)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Docker](https://img.shields.io/badge/Docker-Multi--Arch-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/Zerxen-dev/Aternos-Discord-Bot/pkgs/container/aternos-discord-bot)
-[![Tests Passing](https://img.shields.io/badge/Tests-52%2F52%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
+[![Tests Passing](https://img.shields.io/badge/Tests-53%2F53%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-ff375f?style=for-the-badge)](LICENSE)
 
 <br/>
@@ -31,13 +39,18 @@
 | Feature | Category | Description |
 | :--- | :---: | :--- |
 | 🎛️ **Interactive Panel (`/panel`)** | Control | One-click Start, Stop, Restart, and Status buttons with confirmation guards. |
-| 📊 **Web Dashboard & REST API** | Web Suite | Responsive modern FastAPI web panel (`:8080`) with live telemetry, uptime charts & logs. |
+| 📊 **Web Dashboard & Terminal** | Web Suite | Responsive modern FastAPI web panel (`:8080`) with live telemetry, uptime charts & interactive web console. |
 | 🤖 **AI Assistant (`/ask`)** | Intelligence | Google Gemini & OpenAI natural language intent parser with deterministic fallback. |
 | 🗂️ **Multi-Server Support** | Multi-Tenancy | Seamlessly list and switch between multiple servers (`/servers list`, `/servers select`). |
 | 🟢 **Live Auto-Updating Channels** | Monitoring | Live auto-refreshing status embed + dynamic voice channel title (`🟢 4/20 Online`). |
 | 🔔 **State & Player Alerts** | Notifications | Instant channel notifications with role pings (`@Minecraft`) on online, offline, joins. |
 | ⏰ **Automated Scheduler** | Automation | Scheduled start/stop/restart routines with UTC timers and interactive modal creation. |
 | 🤖 **Auto-Start & Auto-Stop** | Reliability | Automatically reboot on crash; automatically shut down when empty after *N* minutes. |
+| 💾 **Auto-Backup on Stop** | Preservation | Automatic pre-shutdown world backup trigger ensuring zero lost world progress. |
+| 📜 **Live Console & Injection Filter**| Management | Send commands safely (`/console`), interactive web terminal, and live log stream (`/logs`). |
+| 👤 **Context Menu Apps Command** | Discord UI | Right-click any member in Discord → Apps → Quick player inspection & avatar preview. |
+| 🛡️ **Role & Rate-Limit Security** | Security | Sliding-window command rate limiting, token sanitization, and role permission gates. |
+| 📈 **Observability & Metrics** | Diagnostics | Prometheus `/metrics` endpoint, structured JSON logging, and `/stats` command. |
 | 💾 **One-Click Backups** | Preservation | Create and list world backups with pagination directly from Discord. |
 | 📜 **Live Console & Injection Filter**| Management | Send commands safely (`/console`) and view recent log lines (`/logs`). |
 | 🛡️ **Role & Rate-Limit Security** | Security | Sliding-window command rate limiting, token sanitization, and role permission gates. |

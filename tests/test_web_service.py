@@ -28,6 +28,7 @@ def mock_bot():
     bot.aternos.stop = AsyncMock(return_value=True)
     bot.aternos.restart = AsyncMock(return_value=True)
     bot.aternos.get_log = AsyncMock(return_value="[12:00:00] [Server thread/INFO]: Done (2.1s)!")
+    bot.aternos.send_command = AsyncMock(return_value=True)
     return bot
 
 
@@ -121,3 +122,24 @@ def test_dashboard_html_view(client):
     assert "Live Server Dashboard" in resp.text
     assert "Aternos Management Dashboard" in resp.text
     assert "fetchStatus" in resp.text
+
+
+def test_console_execute_endpoint(client, mock_bot):
+    # Valid command
+    resp = client.post(
+        "/api/console/execute",
+        headers={"X-API-Key": "secret123"},
+        json={"command": "say Hello Web Terminal"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["success"] is True
+    mock_bot.aternos.send_command.assert_called_with("say Hello Web Terminal")
+
+    # Malicious injection rejected with 400
+    resp = client.post(
+        "/api/console/execute",
+        headers={"X-API-Key": "secret123"},
+        json={"command": "say hello; rm -rf /"},
+    )
+    assert resp.status_code == 400
+    assert "disallowed" in resp.json()["detail"]
