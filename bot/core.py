@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 
 import discord
@@ -21,6 +22,8 @@ _EXTENSIONS = (
     'bot.cogs.server',
     'bot.cogs.automation',
     'bot.cogs.management',
+    'bot.cogs.multi_server',
+    'bot.cogs.ai_cog',
 )
 
 
@@ -32,6 +35,7 @@ class AternosBot(commands.Bot):
         self.config = config
         self.aternos = aternos
         self.state = state
+        self.web_server_task: asyncio.Task | None = None
 
     async def setup_hook(self) -> None:
         for extension in _EXTENSIONS:
@@ -43,6 +47,29 @@ class AternosBot(commands.Bot):
 
         await self.tree.sync()
         log.info('Slash commands synced globally.')
+
+        if getattr(self.config, 'web_dashboard_enabled', False):
+            try:
+                import uvicorn
+                from .services.web_service import create_web_app
+
+                app = create_web_app(self)
+                server_config = uvicorn.Config(
+                    app,
+                    host=self.config.web_host,
+                    port=self.config.web_port,
+                    log_level='warning',
+                )
+                server = uvicorn.Server(server_config)
+                self.web_server_task = asyncio.create_task(server.serve())
+                log.info(f'Web Dashboard launched on http://{self.config.web_host}:{self.config.web_port}')
+            except Exception as e:
+                log.error(f'Failed to start web dashboard: {e}')
+
+    async def close(self) -> None:
+        if self.web_server_task and not self.web_server_task.done():
+            self.web_server_task.cancel()
+        await super().close()
 
     async def _handle_app_command_error(
         self, interaction: discord.Interaction, error: app_commands.AppCommandError

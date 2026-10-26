@@ -14,8 +14,13 @@ from ..aternos_client import AternosError
 from ..constants import BLUE, GREEN, RED, YELLOW
 from ..embeds import error_embed, footer
 from ..permissions import is_authorized
+from ..utils.modals import SetPropertyModal
+from ..utils.pagination import PaginatorView
+from ..utils.security import CommandRateLimiter, SecurityError, sanitize_console_command
 
 log = logging.getLogger('AternosBot.management')
+
+_CONSOLE_LIMITER = CommandRateLimiter(max_calls=5, window_seconds=30.0)
 
 
 class ManagementCog(commands.Cog):
@@ -35,6 +40,32 @@ class ManagementCog(commands.Cog):
     @is_authorized()
     async def console(self, interaction: discord.Interaction, command: str):
         log.info(f'/console used by {interaction.user}: {command}')
+
+        # Rate limit check
+        is_limited, retry_after = _CONSOLE_LIMITER.is_rate_limited(interaction.user.id)
+        if is_limited:
+            await interaction.response.send_message(
+                embed=footer(
+                    discord.Embed(
+                        title='⏳  Rate Limited',
+                        description=f'You are sending console commands too fast. Please wait **{retry_after}s** before trying again.',
+                        color=YELLOW,
+                    )
+                ),
+                ephemeral=True,
+            )
+            return
+
+        # Input sanitization
+        try:
+            sanitized_cmd = sanitize_console_command(command)
+        except SecurityError as sec_err:
+            await interaction.response.send_message(
+                embed=error_embed('Security Validation Failed', str(sec_err)),
+                ephemeral=True,
+            )
+            return
+
         await interaction.response.defer()
         try:
             await self._fetch_or_raise()
@@ -50,11 +81,11 @@ class ManagementCog(commands.Cog):
                 await interaction.followup.send(embed=embed)
                 return
 
-            await self.aternos.send_command(command)
+            await self.aternos.send_command(sanitized_cmd)
             embed = footer(
                 discord.Embed(
                     title='🖥️  Console Command Sent',
-                    description=f'Command `/{command.lstrip("/")}` has been sent to the console.',
+                    description=f'Command `/{sanitized_cmd}` has been sent to the console.',
                     color=GREEN,
                 )
             )
@@ -74,13 +105,27 @@ class ManagementCog(commands.Cog):
         try:
             await self._fetch_or_raise()
             players = await self.aternos.list_players(Lists.whl)
-            embed = discord.Embed(
+            if not players:
+                embed = footer(
+                    discord.Embed(
+                        title='📋  Whitelisted Players',
+                        description='The whitelist is currently empty.',
+                        color=BLUE,
+                    )
+                )
+                await interaction.followup.send(embed=embed)
+                return
+
+            paginator = PaginatorView(
+                items=players,
                 title='📋  Whitelisted Players',
-                description='\n'.join(f'• `{p}`' for p in players) if players else 'The whitelist is empty.',
-                color=BLUE,
+                per_page=10,
+                author_id=interaction.user.id,
             )
-            embed.add_field(name='Total Players', value=str(len(players)), inline=True)
-            await interaction.followup.send(embed=footer(embed))
+            await interaction.followup.send(
+                embed=paginator.build_embed(),
+                view=paginator if paginator.total_pages > 1 else None,
+            )
         except Exception as e:
             log.error(f'/whitelist list error: {e}')
             await interaction.followup.send(embed=error_embed('Error listing whitelist', e))
@@ -138,13 +183,27 @@ class ManagementCog(commands.Cog):
         try:
             await self._fetch_or_raise()
             players = await self.aternos.list_players(Lists.ops)
-            embed = discord.Embed(
+            if not players:
+                embed = footer(
+                    discord.Embed(
+                        title='👑  Server Operators (OPs)',
+                        description='No operators configured.',
+                        color=BLUE,
+                    )
+                )
+                await interaction.followup.send(embed=embed)
+                return
+
+            paginator = PaginatorView(
+                items=players,
                 title='👑  Server Operators (OPs)',
-                description='\n'.join(f'• `{p}`' for p in players) if players else 'No operators configured.',
-                color=BLUE,
+                per_page=10,
+                author_id=interaction.user.id,
             )
-            embed.add_field(name='Total Operators', value=str(len(players)), inline=True)
-            await interaction.followup.send(embed=footer(embed))
+            await interaction.followup.send(
+                embed=paginator.build_embed(),
+                view=paginator if paginator.total_pages > 1 else None,
+            )
         except Exception as e:
             log.error(f'/op list error: {e}')
             await interaction.followup.send(embed=error_embed('Error listing operators', e))
@@ -202,13 +261,27 @@ class ManagementCog(commands.Cog):
         try:
             await self._fetch_or_raise()
             players = await self.aternos.list_players(Lists.ban)
-            embed = discord.Embed(
+            if not players:
+                embed = footer(
+                    discord.Embed(
+                        title='🚫  Banned Players',
+                        description='No players are currently banned.',
+                        color=BLUE,
+                    )
+                )
+                await interaction.followup.send(embed=embed)
+                return
+
+            paginator = PaginatorView(
+                items=players,
                 title='🚫  Banned Players',
-                description='\n'.join(f'• `{p}`' for p in players) if players else 'No players are banned.',
-                color=BLUE,
+                per_page=10,
+                author_id=interaction.user.id,
             )
-            embed.add_field(name='Total Banned', value=str(len(players)), inline=True)
-            await interaction.followup.send(embed=footer(embed))
+            await interaction.followup.send(
+                embed=paginator.build_embed(),
+                view=paginator if paginator.total_pages > 1 else None,
+            )
         except Exception as e:
             log.error(f'/ban list error: {e}')
             await interaction.followup.send(embed=error_embed('Error listing banned players', e))
@@ -266,7 +339,6 @@ class ManagementCog(commands.Cog):
             props = await self.aternos.get_properties()
             embed = discord.Embed(title='⚙️  Server Properties', color=BLUE)
 
-            # Extract key properties
             display_keys = {
                 'difficulty': 'Difficulty',
                 'gamemode': 'Game Mode',
@@ -283,10 +355,10 @@ class ManagementCog(commands.Cog):
                 if key in props:
                     val = props[key]
                     if isinstance(val, bool):
-                        val_str = '✅ Yes' if val else '❌ No'
-                        # Invert Cracked representation to make it clearer
                         if key == 'online-mode':
                             val_str = '❌ Yes (Premium Only)' if val else '✅ Yes (Cracked Allowed)'
+                        else:
+                            val_str = '✅ Yes' if val else '❌ No'
                     else:
                         val_str = f'`{val}`'
                     embed.add_field(name=display, value=val_str, inline=True)
@@ -298,57 +370,69 @@ class ManagementCog(commands.Cog):
 
     @app_commands.command(name='setproperty', description='Update a server configuration option')
     @app_commands.describe(
-        option='Property key (e.g. difficulty, gamemode, white-list, online-mode, pvp)',
-        value='Value to set (e.g. true, false, hard, creative, 20)',
+        option='Property key (leave blank to open interactive modal)',
+        value='Value to set (leave blank to open interactive modal)',
     )
     @is_authorized()
-    async def setproperty(self, interaction: discord.Interaction, option: str, value: str):
-        log.info(f'/setproperty used by {interaction.user}: {option} = {value}')
+    async def setproperty(
+        self,
+        interaction: discord.Interaction,
+        option: Optional[str] = None,
+        value: Optional[str] = None,
+    ):
+        # If parameters omitted, launch interactive Discord modal dialog
+        if not option or not value:
+            async def _modal_callback(modal_inter: discord.Interaction, opt: str, val: str):
+                await self._apply_setproperty(modal_inter, opt, val)
+
+            modal = SetPropertyModal(_modal_callback)
+            await interaction.response.send_modal(modal)
+            return
+
         await interaction.response.defer()
+        await self._apply_setproperty(interaction, option, value)
+
+    async def _apply_setproperty(self, interaction: discord.Interaction, option: str, value: str):
         try:
             await self._fetch_or_raise()
-
-            # Normalise option key
-            option = option.strip().lower()
-            # Map standard friendly names if given
+            opt_clean = option.strip().lower()
             mapping = {
                 'whitelist': 'white-list',
                 'cracked': 'online-mode',
                 'gamemode': 'gamemode',
             }
-            if option in mapping:
-                option = mapping[option]
+            if opt_clean in mapping:
+                opt_clean = mapping[opt_clean]
 
-            # Parse value
             parsed_val: str | bool | int = value
             val_lower = value.strip().lower()
             if val_lower in ('true', 'yes', 'on', 'enabled'):
-                # Invert Cracked representation logic mapping if setting online-mode
-                parsed_val = False if option == 'online-mode' and val_lower in ('true', 'yes') else True
-                if option == 'online-mode':
-                    # If setting cracked to True, online-mode must be false (online-mode=false means cracked=true)
-                    parsed_val = False
+                parsed_val = False if opt_clean == 'online-mode' else True
             elif val_lower in ('false', 'no', 'off', 'disabled'):
-                parsed_val = True if option == 'online-mode' and val_lower in ('false', 'no') else False
-                if option == 'online-mode':
-                    # If setting cracked to False, online-mode must be true
-                    parsed_val = True
+                parsed_val = True if opt_clean == 'online-mode' else False
             elif val_lower.isdigit():
                 parsed_val = int(val_lower)
 
-            await self.aternos.set_property(option, parsed_val)
+            await self.aternos.set_property(opt_clean, parsed_val)
 
             embed = footer(
                 discord.Embed(
                     title='⚙️  Property Updated',
-                    description=f'Option `{option}` has been updated to `{value}`.\n*Note: A server restart is required for changes to take effect.*',
+                    description=f'Option `{opt_clean}` has been updated to `{value}`.\n*Note: A server restart is required for changes to take effect.*',
                     color=GREEN,
                 )
             )
-            await interaction.followup.send(embed=embed)
+            if not interaction.response.is_done():
+                await interaction.response.send_message(embed=embed)
+            else:
+                await interaction.followup.send(embed=embed)
         except Exception as e:
-            log.error(f'/setproperty error: {e}')
-            await interaction.followup.send(embed=error_embed('Error setting property', e))
+            log.error(f'setproperty error: {e}')
+            err_emb = error_embed('Error setting property', e)
+            if not interaction.response.is_done():
+                await interaction.response.send_message(embed=err_emb, ephemeral=True)
+            else:
+                await interaction.followup.send(embed=err_emb)
 
     # ── /logs ─────────────────────────────────────────────────────────────
 
@@ -361,8 +445,7 @@ class ManagementCog(commands.Cog):
         try:
             await self._fetch_or_raise()
             log_text = await self.aternos.get_log(max_lines=lines or 40)
-            
-            # Truncate to fit within Discord embed field limit (approx 1900 chars)
+
             if len(log_text) > 1850:
                 log_text = '... (truncated)\n' + log_text[-1800:]
 
@@ -420,16 +503,24 @@ class ManagementCog(commands.Cog):
                         color=YELLOW,
                     )
                 )
-            else:
-                desc = '\n'.join([f"• **{b.get('name', 'Backup')}** — `{b.get('time', 'Unknown')}` ({b.get('size', 'N/A')})" for b in backups[:15]])
-                embed = footer(
-                    discord.Embed(
-                        title=f'💾  World Backups ({len(backups)})',
-                        description=desc,
-                        color=BLUE,
-                    )
-                )
-            await interaction.followup.send(embed=embed)
+                await interaction.followup.send(embed=embed)
+                return
+
+            formatted_backups = [
+                f"**{b.get('name', 'Backup')}** — `{b.get('time', 'Unknown')}` ({b.get('size', 'N/A')})"
+                for b in backups
+            ]
+            paginator = PaginatorView(
+                items=formatted_backups,
+                title=f'💾  World Backups ({len(backups)})',
+                per_page=8,
+                author_id=interaction.user.id,
+                format_item=lambda idx, it: f"#{idx}. {it}",
+            )
+            await interaction.followup.send(
+                embed=paginator.build_embed(),
+                view=paginator if paginator.total_pages > 1 else None,
+            )
         except Exception as e:
             log.error(f'/backup list error: {e}')
             await interaction.followup.send(embed=error_embed('Could not list backups', e))
@@ -437,4 +528,3 @@ class ManagementCog(commands.Cog):
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(ManagementCog(bot))
-

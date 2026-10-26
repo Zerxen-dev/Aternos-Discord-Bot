@@ -14,6 +14,7 @@ from discord.ext import commands, tasks
 from ..constants import BLUE, GREEN, RED, YELLOW
 from ..embeds import footer, error_embed
 from ..permissions import is_authorized
+from ..utils.modals import AddScheduleModal
 
 log = logging.getLogger('AternosBot.automation')
 
@@ -93,6 +94,15 @@ class AutomationCog(commands.Cog):
 
         # 1. Update presence
         await self._update_presence(status, players_count, slots)
+
+        # Update metrics & web dashboard uptime history
+        try:
+            from ..services.metrics_service import update_server_state
+            from ..services.web_service import record_uptime_sample
+            update_server_state(status=status, players=players_count, slots=slots)
+            record_uptime_sample(subdomain=getattr(server, 'subdomain', 'minecraft'), status=status, players=players_count)
+        except Exception as e:
+            log.debug(f'Metrics/uptime update failed: {e}')
 
         # 2. Process State Transition Alerts & Player Join/Leave Events
         await self._handle_alerts(status, players_list)
@@ -635,6 +645,50 @@ class AutomationCog(commands.Cog):
             )
         )
         await interaction.response.send_message(embed=embed)
+
+    @schedule_group.command(name='modal', description='Add a scheduled start/stop timer using an interactive modal')
+    @is_authorized()
+    async def schedule_modal(self, interaction: discord.Interaction):
+        async def on_modal_submit(inter: discord.Interaction, action: str, time_utc: str, days: str):
+            if action not in ('start', 'stop', 'restart'):
+                await inter.response.send_message(
+                    embed=error_embed('Invalid Action', "Action must be 'start', 'stop', or 'restart'."),
+                    ephemeral=True,
+                )
+                return
+            time_clean = time_utc.strip()
+            parts = time_clean.split(':')
+            if len(parts) != 2 or not parts[0].isdigit() or not parts[1].isdigit() or not (0 <= int(parts[0]) <= 23) or not (0 <= int(parts[1]) <= 59):
+                await inter.response.send_message(
+                    embed=error_embed('Invalid Time Format', 'Please specify time as `HH:MM` in 24-hour format (e.g. `18:00`).'),
+                    ephemeral=True,
+                )
+                return
+
+            formatted_time = f'{int(parts[0]):02d}:{int(parts[1]):02d}'
+            new_id = (max([s.get('id', 0) for s in self.state.schedules], default=0)) + 1
+            new_entry = {
+                'id': new_id,
+                'action': action,
+                'time': formatted_time,
+                'days': days or 'all',
+                'created_by': inter.user.display_name,
+            }
+            self.state.schedules.append(new_entry)
+            self.state.save(self.config.state_file)
+            embed = footer(
+                discord.Embed(
+                    title='⏰  Scheduled Timer Added',
+                    description=(
+                        f'> Scheduled **{action.upper()}** every **{(days or "all").upper()}** at **{formatted_time} UTC**.\n'
+                        f'🆔  **Schedule ID:** `#{new_id}`'
+                    ),
+                    color=GREEN,
+                )
+            )
+            await inter.response.send_message(embed=embed)
+
+        await interaction.response.send_modal(AddScheduleModal(on_modal_submit))
 
     @schedule_group.command(name='list', description='List all scheduled timers')
     async def schedule_list(self, interaction: discord.Interaction):
