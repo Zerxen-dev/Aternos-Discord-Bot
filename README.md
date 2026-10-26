@@ -1,12 +1,8 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="Aternos Discord Bot Banner" width="100%"/>
-
-<br/><br/>
-
-<a href="#-features">
-  <img src="assets/logo.png" alt="Aternos Discord Bot Logo" width="130" style="border-radius: 28px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);"/>
-</a>
+<p align="center">
+  <img src="./assets/logo.png" alt="Aternos Discord Bot Logo" width="180" height="180" />
+</p>
 
 # 🎮 Aternos Discord Bot v2.0
 ### *The Ultimate Production-Grade Management Suite for Aternos Minecraft Servers*
@@ -17,6 +13,12 @@
 [![Docker](https://img.shields.io/badge/Docker-Multi--Arch-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/Zerxen-dev/Aternos-Discord-Bot/pkgs/container/aternos-discord-bot)
 [![Tests Passing](https://img.shields.io/badge/Tests-53%2F53%20Passing-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-ff375f?style=for-the-badge)](LICENSE)
+
+<br/>
+
+<p align="center">
+  <img src="./assets/banner.svg" alt="Aternos Discord Bot Banner" width="100%" />
+</p>
 
 <br/>
 
